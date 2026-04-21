@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: smart-registry
+
+server:
+  port: 8761
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    # 注册中心不需要将自己注册到其他注册中心
+    register-with-eureka: false
+    # 不需要去发现其他服务
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,eureka
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO

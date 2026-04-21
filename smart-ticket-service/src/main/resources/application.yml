@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: smart-ticket-service
+
+  # 数据源配置
+  datasource:
+    url: jdbc:h2:mem:ticketdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # H2控制台配置（开发环境）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+  session:
+    store-type: redis
+    redis:
+      namespace: smart-ticket-service
+
+server:
+  port: 8082
+
+# Eureka配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,ticket-service
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.example.smart.ticket: DEBUG

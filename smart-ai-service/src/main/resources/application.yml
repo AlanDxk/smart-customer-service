@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: smart-ai-service
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+  # WebSocket配置
+  websocket:
+    memory-broker-session-expiry: 1800000
+
+  # LangChain4j配置
+  langchain4j:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      model: gpt-3.5-turbo
+      temperature: 0.7
+      max-tokens: 1000
+
+  session:
+    store-type: redis
+    redis:
+      namespace: smart-ai-service
+
+server:
+  port: 8081
+
+# Eureka配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,ai-service
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.example.smart.ai: DEBUG
+    dev.langchain4j: DEBUG
