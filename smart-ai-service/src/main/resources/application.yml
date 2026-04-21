@@ -2,6 +2,23 @@ spring:
   application:
     name: smart-ai-service
 
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
   # Redis配置
   data:
     redis:
@@ -14,13 +31,12 @@ spring:
     memory-broker-session-expiry: 1800000
 
   # LangChain4j配置
-  langchain4j:
-    openai:
-      api-key: ${OPENAI_API_KEY:your-openai-api-key}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model: gpt-3.5-turbo
-      temperature: 0.7
-      max-tokens: 1000
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${API_KEY}
+      model-name: qwen-plus
 
   session:
     store-type: redis
