@@ -28,26 +28,28 @@ spring:
   # Redis配置
   data:
     redis:
-      host: localhost
+      host: 192.168.101.68
       port: 6379
-      database: 0
+      password: redis
+      database: 10
+
+  # Nacos配置（合并到这里）
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        username: nacos
+        password: nacos
 
 server:
   port: 8083
 
-# Eureka配置
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
-
 # JWT配置
 jwt:
-  secret: smart-customer-service-secret-key-for-jwt-token-generation
-  expiration: 86400000 # 24小时
+    secret: smart-customer-service-secret-key-for-jwt-token-generation
+    access-token-expiration: 7200000      # 2小时
+    refresh-token-expiration: 604800000   # 7天
 
 # 监控配置
 management:
@@ -63,3 +65,8 @@ management:
 logging:
   level:
     org.example.smart.user: DEBUG
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html          # Swagger UI 访问路径
+  api-docs:
+    path: /v3/api-docs

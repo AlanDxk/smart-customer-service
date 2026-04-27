@@ -28,8 +28,9 @@ spring:
   # Redis配置
   data:
     redis:
-      host: localhost
+      host: 192.168.101.68
       port: 6379
+      password: redis
       database: 0
 
   session:
@@ -40,14 +41,15 @@ spring:
 server:
   port: 8082
 
-# Eureka配置
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
+# Nacos配置
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        username: nacos
+        password: nacos
 
 # 监控配置
 management:
