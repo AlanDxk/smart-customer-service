@@ -40,7 +40,8 @@ public class SwaggerConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
-                .name("Authorization");
+                .name("Authorization")
+                .description("请输入Bearer Token，格式：Bearer <token>");
 
         return new OpenAPI()
                 .info(info)

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
  * 3. 用户画像构建
  * 4. 权限管理
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"org.example.smart.user"})
 @EnableDiscoveryClient
 @EnableFeignClients
 @ComponentScan(basePackages = {"org.example.smart.user", "org.example.smart.gateway"})

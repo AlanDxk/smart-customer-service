@@ -1,26 +1,17 @@
 package org.example.smart.user.repository;
 
 import org.example.smart.user.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 /**
- * 用户仓库接口
+ * 用户仓库接口（响应式）
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends R2dbcRepository<User, Long> {
 
-    /**
-     * 根据用户名查找用户
-     * @param username 用户名
-     * @return 用户
-     */
-    User findByUsername(String username);
+    Mono<User> findByUsername(String username);
 
-    /**
-     * 根据邮箱查找用户
-     * @param email 邮箱
-     * @return 用户
-     */
-    User findByEmail(String email);
+    Mono<User> findByEmail(String email);
 }
