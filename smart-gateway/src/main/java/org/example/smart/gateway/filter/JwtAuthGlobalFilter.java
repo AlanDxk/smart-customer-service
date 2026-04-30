@@ -52,12 +52,19 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
-        // 0、获取请求路径
+        // 0、获取请求路径和方法
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
-        logger.info("========== JwtAuthGlobalFilter 拦截到请求: {} ==========", path);
+        String method = request.getMethod().name();
+        logger.info("========== JwtAuthGlobalFilter 拦截到请求: {} {} ==========", method, path);
 
-        // 1、检查是否需要放行
+        // 1、放行OPTIONS预检请求（CORS）
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            logger.debug("放行OPTIONS预检请求: {}", path);
+            return chain.filter(exchange);
+        }
+
+        // 2、检查是否需要放行
         if (isExcludedPath(path)) {
             logger.debug("放行路径: {}", path);
             return chain.filter(exchange);

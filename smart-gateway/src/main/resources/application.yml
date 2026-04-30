@@ -21,25 +21,24 @@ spring:
         - id: smart-ticket-service
           uri: lb://smart-ticket-service
           predicates:
-            - Path=/api/ticket/**
-          filters:
-            - StripPrefix=1
+            - Path=/api/tickets/**
+
+
 
         # 用户服务路由
         - id: smart-user-service
           uri: lb://smart-user-service
           predicates:
-            - Path=/api/user/**
-          filters:
-            - StripPrefix=1
+            - Path=/api/users/**
+
 
       # 限流配置
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 10
-            redis-rate-limiter.burstCapacity: 20
-            redis-rate-limiter.requestedTokens: 1
+#      default-filters:
+#        - name: RequestRateLimiter
+#          args:
+#            redis-rate-limiter.replenishRate: 100
+#            redis-rate-limiter.burstCapacity: 200
+#            redis-rate-limiter.requestedTokens: 1
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848

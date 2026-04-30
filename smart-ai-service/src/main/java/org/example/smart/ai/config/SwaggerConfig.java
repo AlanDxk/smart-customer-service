@@ -35,14 +35,14 @@ public class SwaggerConfig {
                                 .url("http://springdoc.org")))
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:" + serverPort)
-                                .description("本地开发环境"),
+                                .url("http://localhost:8080")
+                                .description("本地开发环境（通过网关访问）"),
                         new Server()
-                                .url("http://dev.example.com/ai")
-                                .description("开发环境"),
+                                .url("http://dev.example.com")
+                                .description("开发环境（通过网关访问）"),
                         new Server()
-                                .url("http://prod.example.com/ai")
-                                .description("生产环境")
+                                .url("http://prod.example.com")
+                                .description("生产环境（通过网关访问）")
                 ));
     }
 }

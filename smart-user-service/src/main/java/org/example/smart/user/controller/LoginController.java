@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
  * 用户控制器（响应式）
  */
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @Tag(name = "用户管理", description = "用户登录、注册、信息管理等接口")
 @RequiredArgsConstructor
 public class LoginController {

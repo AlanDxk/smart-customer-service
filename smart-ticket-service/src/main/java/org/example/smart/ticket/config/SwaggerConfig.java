@@ -1,4 +1,4 @@
-package org.example.smart.user.config;
+package org.example.smart.ticket.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
@@ -12,14 +12,15 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+
 @Configuration
 public class SwaggerConfig {
 
     @Bean
-    public OpenAPI userMicroserviceOpenAPI() {
+    public OpenAPI ticketMicroserviceOpenAPI() {
         Server server = new Server();
         server.setUrl("http://localhost:8080");
-        server.setDescription("用户服务（通过网关访问）");
+        server.setDescription("工单服务（通过网关访问）");
 
         Contact contact = new Contact();
         contact.setEmail("support@smart-customer-service.com");

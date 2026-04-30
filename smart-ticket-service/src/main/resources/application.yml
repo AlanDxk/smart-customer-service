@@ -2,28 +2,15 @@ spring:
   application:
     name: smart-ticket-service
 
-  # 数据源配置
-  datasource:
-    url: jdbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+  # R2DBC 数据源配置
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
     username: root
     password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  # JPA配置
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-
-  # H2控制台配置（开发环境）
-  h2:
-    console:
-      enabled: false
-      path: /h2-console
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
 
   # Redis配置
   data:
@@ -38,11 +25,7 @@ spring:
     redis:
       namespace: smart-ticket-service
 
-server:
-  port: 8082
-
-# Nacos配置
-spring:
+  # Nacos配置
   cloud:
     nacos:
       discovery:
@@ -50,6 +33,24 @@ spring:
         namespace: public
         username: nacos
         password: nacos
+
+  # 禁用 Security 自动配置
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.rsocket.RSocketSecurityAutoConfiguration
+
+server:
+  port: 8082
+
+# JWT配置
+jwt:
+  secret: smart-customer-service-secret-key-for-jwt-token-generation
+  access-token-expiration: 7200000      # 2小时
+  refresh-token-expiration: 604800000   # 7天
+  renewal-threshold-minutes: 30         # 续约阈值（分钟）
 
 # 监控配置
 management:
@@ -65,3 +66,10 @@ management:
 logging:
   level:
     org.example.smart.ticket: DEBUG
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
