@@ -9,7 +9,6 @@ import org.example.smart.ticket.dto.TicketResponse;
 import org.example.smart.ticket.service.TicketService;
 import org.example.smart.common.response.ApiResponse;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -42,10 +41,12 @@ public class TicketController {
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "根据用户ID查询工单", description = "查询指定用户的所有工单")
-    public Flux<TicketResponse> findByUserId(
+    public Mono<ApiResponse<java.util.List<TicketResponse>>> findByUserId(
             @Parameter(description = "用户ID", required = true)
             @PathVariable("userId") Long userId) {
-        return ticketService.findByUserId(userId);
+        return ticketService.findByUserId(userId)
+                .collectList()
+                .map(ApiResponse::success);
     }
 
     @PutMapping("/{id}")

@@ -2,6 +2,10 @@ spring:
   application:
     name: smart-ai-service
 
+  jackson:
+    serialization:
+      indent-output: true
+
   # 数据源配置
   datasource:
     url: jdbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8

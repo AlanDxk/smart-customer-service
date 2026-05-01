@@ -2,6 +2,10 @@ spring:
   application:
     name: smart-user-service
 
+  jackson:
+    serialization:
+      indent-output: true
+
   # R2DBC 数据源配置
   r2dbc:
     url: r2dbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
