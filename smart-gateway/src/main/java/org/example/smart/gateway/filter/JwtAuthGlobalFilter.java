@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
@@ -81,10 +82,10 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
             logger.error("token验证失败");
             return unauthorized(exchange, "token验证失败");
         }
-        //4、获取用户信息
-        String userId = jwtUtil.getUserIdFromToken(token);
-        String username = jwtUtil.getUsernameFromToken(token);
-        String role = jwtUtil.getRoleFromToken(token);
+        //4、从claims直接获取用户信息（不再重复解析token）
+        String userId = jwtUtil.getUserId(claims);
+        String username = jwtUtil.getUsername(claims);
+        String role = jwtUtil.getRole(claims);
         if (userId == null || username == null || role == null) {
             logger.error("从token中获取用户信息失败");
             return unauthorized(exchange, "从token中获取用户信息失败");
@@ -100,24 +101,50 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
                 .request(newRequest)
                 .build();
         // 6. Token续约逻辑
-        if(jwtUtil.isTokenAboutToExpire(token)){
-            String newToken=renewAccessToken(userId,claims).block();
-            if (newToken == null) {
-                return unauthorized(exchange, "续约AccessToken失败");
-            }
-            mutatedExchange.getAttributes().put("newToken", newToken);
-            logger.debug("Token即将过期，已生成新Token - userId: {}", userId);
+        boolean aboutToExpire = jwtUtil.isTokenAboutToExpire(claims);
+        boolean expired = jwtUtil.isTokenExpired(claims);
+        logger.info("[续约-检查] aboutToExpire={}, expired={}, userId={}", aboutToExpire, expired, userId);
 
+        if(aboutToExpire){
+
+            return renewAccessToken(userId, claims)
+                // 用 Optional 包装，使 defaultIfEmpty 只对 renewAccessToken 生效
+                // 避免 chain.filter 返回 Mono.empty() 时误触发 fallback
+                .map(newAccessToken -> java.util.Optional.of(newAccessToken))
+                .defaultIfEmpty(java.util.Optional.empty())
+                .flatMap(optToken -> {
+                    if (optToken.isPresent()) {
+                        String newToken = optToken.get();
+                        logger.info("Token续约成功，更新请求头 - userId: {}", userId);
+
+                        // 将新 token 更新到请求头中，替换旧 token
+                        ServerHttpRequest renewedRequest = newRequest.mutate()
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + newToken)
+                                .build();
+
+                        // 用装饰器包装响应，使 ReadOnlyHttpHeaders 变为可写
+                        ServerHttpResponse decoratedResponse = wrapResponse(
+                                mutatedExchange.getResponse(), "X-New-Token", newToken);
+
+                        ServerWebExchange newExchange = mutatedExchange.mutate()
+                                .request(renewedRequest)
+                                .response(decoratedResponse)
+                                .build();
+
+                        return chain.filter(newExchange);
+                    } else {
+                        // renewAccessToken 返回空，续约失败
+                        if (expired) {
+                            logger.error("Token已过期且续约失败 - userId: {}", userId);
+                            return unauthorized(exchange, "Token已过期，请重新登录");
+                        }
+                        logger.warn("Token续约失败，继续处理请求 - userId: {}", userId);
+                        return chain.filter(mutatedExchange);
+                    }
+                });
         }
-        // 7. 继续过滤链，并在响应时添加新Token
-        return chain.filter(mutatedExchange).then(Mono.fromRunnable(() -> {
-            String newToken = mutatedExchange.getAttribute("newToken");
-            if (newToken != null) {
-                ServerHttpResponse response = exchange.getResponse();
-                response.getHeaders().add("X-New-Token", newToken);
-                logger.debug("响应头已添加新Token - userId: {}", userId);
-            }
-        }));
+        // 7. 继续过滤链
+        return chain.filter(mutatedExchange);
     }
 
 
@@ -172,23 +199,49 @@ public class JwtAuthGlobalFilter implements GlobalFilter, Ordered {
         return response.writeWith(Mono.just(buffer));
     }
 
-    private Mono<String> renewAccessToken(String userId,Claims claims) {
-        //1、先从redis中获取Refresh token
-        return reactiveRedisTemplate.opsForValue().get("refresh:token:" + userId)
-            .switchIfEmpty(Mono.defer(()->{
-                logger.error("未找到Refresh token");
-                return Mono.empty();
-            }))
-            .flatMap(longToken->{
-                //2、判断是否过期，过期要重新登录
-                if(jwtUtil.isTokenExpired(longToken)){
-                    logger.error("Refresh token过期");
-                    return Mono.empty();
+    /**
+     * 包装响应，使其响应头可写，用于在续约时添加 X-New-Token
+     */
+    private ServerHttpResponse wrapResponse(ServerHttpResponse delegate, String header, String value) {
+        return new ServerHttpResponseDecorator(delegate) {
+            private HttpHeaders writableHeaders;
+
+            @Override
+            public HttpHeaders getHeaders() {
+                if (this.writableHeaders == null) {
+                    // 从只读headers复制一份到可写的 HttpHeaders
+                    this.writableHeaders = new HttpHeaders();
+                    this.writableHeaders.addAll(super.getHeaders());
+                    this.writableHeaders.add(header, value);
                 }
-                //3、没有过期，生成新的AccessToken返回
-                String newToken = jwtUtil.generateAccessToken(claims);
-                return Mono.just(newToken);
-            });
+                return this.writableHeaders;
+            }
+        };
+    }
+
+    private Mono<String> renewAccessToken(String userId, Claims claims) {
+        String redisKey = "refresh:token:" + userId;
+
+        return reactiveRedisTemplate.opsForValue().get(redisKey)
+                .switchIfEmpty(Mono.defer(() -> {
+                    logger.warn("[续约-步骤1] Redis中未找到refresh token, userId={}", userId);
+                    return Mono.empty();
+                }))
+                .flatMap(refreshToken -> {
+                    logger.info("[续约-步骤1] 从Redis获取到refresh token, userId={}", userId);
+                    if (jwtUtil.isTokenExpired(refreshToken)) {
+                        logger.warn("[续约-步骤2] Refresh token已过期, userId={}", userId);
+                        return Mono.empty();
+                    }
+                    logger.info("[续约-步骤2] Refresh token有效, userId={}", userId);
+                    String newToken = jwtUtil.generateAccessToken(claims);
+                    logger.info("[续约-步骤3] 新access token已生成, userId={}", userId);
+                    return Mono.just(newToken);
+                })
+                .onErrorResume(e -> {
+                    logger.error("[续约-异常] userId={}, error={}", userId, e.getMessage(), e);
+                    return Mono.empty();
+                });
     }
 
     @Override

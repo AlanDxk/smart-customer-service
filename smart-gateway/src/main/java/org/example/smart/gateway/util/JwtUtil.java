@@ -1,6 +1,7 @@
 package org.example.smart.gateway.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -13,10 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
-
-/**
- * JWT工具类
- */
 @Component
 public class JwtUtil {
 
@@ -25,21 +22,21 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-    }
-
     @Value("${jwt.access-token-expiration}")
     private long expirationTime;
 
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpirationTime;
 
-    /**
-     * 生成访问令牌
-     * @param claims 自定义claims
-     * @return JWT token
-     */
+    @Value("${jwt.renewal-threshold-minutes:30}")
+    private long renewalThresholdMinutes;
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    // ==================== Token 生成 ====================
+
     public String generateAccessToken(Map<String, Object> claims) {
         return Jwts.builder()
                 .claims(claims)
@@ -49,11 +46,10 @@ public class JwtUtil {
                 .compact();
     }
 
-    /**
-     * 生成刷新令牌
-     * @param claims 自定义claims
-     * @return 刷新token
-     */
+    public String generateAccessToken(Claims claims) {
+        return generateAccessToken((Map<String, Object>) claims);
+    }
+
     public String generateRefreshToken(Map<String, Object> claims) {
         return Jwts.builder()
                 .claims(claims)
@@ -63,12 +59,12 @@ public class JwtUtil {
                 .compact();
     }
 
-
+    // ==================== Token 验证 ====================
 
     /**
-     * 验证JWT token
-     * @param token JWT token
-     * @return 验证结果，成功返回claims，失败返回null
+     * 验证JWT token并返回claims。
+     * 过期但签名合法的token仍会返回claims，由调用方决定是否续约。
+     * 签名不合法返回null。
      */
     public Claims validateToken(String token) {
         try {
@@ -77,105 +73,87 @@ public class JwtUtil {
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
+        } catch (ExpiredJwtException e) {
+            logger.warn("JWT已过期，尝试续约");
+            return e.getClaims();
         } catch (Exception e) {
             logger.error("JWT验证失败: {}", e.getMessage());
             return null;
         }
     }
 
-    /**
-     * 检查token是否过期
-     * @param token JWT token
-     * @return true-已过期，false-未过期
-     */
-    public boolean isTokenExpired(String token) {
-        Claims claims = validateToken(token);
-        if (claims == null) {
-            return true;
-        }
-        Date expiration = claims.getExpiration();
-        return expiration.before(new Date());
-    }
+    // ==================== Claims 提取（直接传Claims，避免重复解析） ====================
 
-
-
-    /**
-     * 从token中获取用户ID
-     * @param token JWT token
-     * @return 用户ID
-     */
-    public String getUserIdFromToken(String token) {
-        Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
+    public String getUserId(Claims claims) {
         return claims.get("userId", String.class);
     }
 
-    /**
-     * 从token中获取用户名
-     * @param token JWT token
-     * @return 用户名
-     */
-    public String getUsernameFromToken(String token) {
-        Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
+    public String getUsername(Claims claims) {
         return claims.get("username", String.class);
     }
 
-    /**
-     * 从token中获取用户角色
-     * @param token JWT token
-     * @return 用户角色
-     */
-    public String getRoleFromToken(String token) {
-        Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
+    public String getRole(Claims claims) {
         return claims.get("role", String.class);
     }
 
+    // ==================== Token 状态判断（Claims 版本，推荐使用） ====================
+
     /**
-     * 检查token是否即将过期（剩余时间小于30分钟）
-     * @param token JWT token
-     * @return true-即将过期，false-未过期
+     * 检查token是否已过期（当前时间已超过过期时间）
      */
+    public boolean isTokenExpired(Claims claims) {
+        Date expiration = claims.getExpiration();
+        return expiration != null && expiration.before(new Date());
+    }
+
+    /**
+     * 检查token是否即将过期（剩余时间小于续约阈值）
+     */
+    public boolean isTokenAboutToExpire(Claims claims) {
+        Date expiration = claims.getExpiration();
+        if (expiration == null) {
+            return false;
+        }
+        long remainingTime = expiration.getTime() - System.currentTimeMillis();
+        return remainingTime < renewalThresholdMinutes * 60 * 1000;
+    }
+
+    // ==================== Token 状态判断（String 版本，内部调用时请优先用Claims版本） ====================
+
+    public boolean isTokenExpired(String token) {
+        Claims claims = validateToken(token);
+        return claims == null || isTokenExpired(claims);
+    }
+
     public boolean isTokenAboutToExpire(String token) {
         Claims claims = validateToken(token);
-        if (claims == null) {
-            return true;
-        }
-        Date expiration = claims.getExpiration();
-        long remainingTime = expiration.getTime() - System.currentTimeMillis();
-        return remainingTime < 30 * 60 * 1000; // 30分钟
+        return claims != null && isTokenAboutToExpire(claims);
     }
 
-    /**
-     * 获取token的过期时间
-     * @param token JWT token
-     * @return 过期时间
-     */
+    // ==================== 从 token 字符串提取信息（String 版本） ====================
+
+    public String getUserIdFromToken(String token) {
+        Claims claims = validateToken(token);
+        return claims != null ? getUserId(claims) : null;
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = validateToken(token);
+        return claims != null ? getUsername(claims) : null;
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = validateToken(token);
+        return claims != null ? getRole(claims) : null;
+    }
+
     public Date getExpirationDateFromToken(String token) {
         Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
-        return claims.getExpiration();
+        return claims != null ? claims.getExpiration() : null;
     }
 
-    /**
-     * 获取token的签发时间
-     * @param token JWT token
-     * @return 签发时间
-     */
     public Date getIssuedAtDateFromToken(String token) {
         Claims claims = validateToken(token);
-        if (claims == null) {
-            return null;
-        }
-        return claims.getIssuedAt();
+        return claims != null ? claims.getIssuedAt() : null;
     }
 }

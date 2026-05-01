@@ -30,7 +30,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setDepartmentId(request.getDepartmentId());
         ticket.setSource(request.getSource());
         ticket.setUserId(request.getUserId());
-        ticket.setStatusId(0L); // 默认状态：待处理
+        ticket.setStatusId(Long.valueOf(1)); // 默认状态：待处理
         ticket.setCreateTime(LocalDateTime.now());
         ticket.setUpdateTime(LocalDateTime.now());
         ticket.setIsDeleted(0);

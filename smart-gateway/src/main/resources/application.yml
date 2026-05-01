@@ -24,13 +24,28 @@ spring:
             - Path=/api/tickets/**
 
 
-
         # 用户服务路由
         - id: smart-user-service
           uri: lb://smart-user-service
           predicates:
             - Path=/api/users/**
 
+
+        # Swagger UI 路由（聚合所有微服务的 API 文档）
+        - id: smart-user-service-swagger
+          uri: lb://smart-user-service
+          predicates:
+            - Path=/swagger-ui/**,/swagger-ui.html,/v3/api-docs/**,/swagger-resources/**,/webjars/**,/api-docs/**
+
+
+      # CORS 全局配置（处理OPTIONS预检请求）
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+            allowCredentials: true
 
       # 限流配置
 #      default-filters:
@@ -52,7 +67,7 @@ spring:
       host: 192.168.101.68
       port: 6379
       password: redis
-      database: 0
+      database: 10
 
 server:
   port: 8080
@@ -76,5 +91,5 @@ logging:
 # JWT配置
 jwt:
   secret: smart-customer-service-secret-key-2024
-  access-token-expiration: 7200000  # 2小时，单位：毫秒
+  access-token-expiration: 72  # 2小时，单位：毫秒
   refresh-token-expiration: 604800000  # 7天，单位：毫秒
