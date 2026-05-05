@@ -43,19 +43,19 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
 
-        <!-- LangChain4j -->
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-core</artifactId>
-            <version>0.34.0</version>
-        </dependency>
+<!--        &lt;!&ndash; LangChain4j &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>dev.langchain4j</groupId>-->
+<!--            <artifactId>langchain4j-core</artifactId>-->
+<!--            <version>0.34.0</version>-->
+<!--        </dependency>-->
 
-        <!-- LangChain4j OpenAI (可选，如果使用OpenAI) -->
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai</artifactId>
-            <version>0.34.0</version>
-        </dependency>
+<!--        &lt;!&ndash; LangChain4j OpenAI (可选，如果使用OpenAI) &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>dev.langchain4j</groupId>-->
+<!--            <artifactId>langchain4j-open-ai</artifactId>-->
+<!--            <version>0.34.0</version>-->
+<!--        </dependency>-->
 
         <!-- Common Annotations -->
         <dependency>

@@ -6,22 +6,15 @@ spring:
     serialization:
       indent-output: true
 
-  # 数据源配置
-  datasource:
-    url: jdbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+  # R2DBC 数据源配置
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/smart_customer_service?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
     username: root
     password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  # JPA配置
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
+    pool:
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 30m
 
   # Redis配置
   data:
@@ -31,28 +24,15 @@ spring:
       password: redis
       database: 0
 
-  # WebSocket配置
-  websocket:
-    memory-broker-session-expiry: 1800000
+  # Elasticsearch配置
+  elasticsearch:
+    uris: https://10.105.6.89:9201/
+    username: elastic
+    password: Cr=1TwP4deZNBHrfKPwY
+    connection-timeout: 10s
+    socket-timeout: 30s
 
-  # LangChain4j配置
-langchain4j:
-  open-ai:
-    chat-model:
-      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-      api-key: ${API_KEY}
-      model-name: qwen-plus
-
-  session:
-    store-type: redis
-    redis:
-      namespace: smart-ai-service
-
-server:
-  port: 8081
-
-# Nacos配置
-spring:
+  # Nacos配置
   cloud:
     nacos:
       discovery:
@@ -60,6 +40,23 @@ spring:
         namespace: public
         username: nacos
         password: nacos
+
+server:
+  port: 8081
+
+# LangChain4j配置
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${API_KEY}
+      model-name: qwen-plus
+    streaming-chat-model: #流式模型配置
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${API_KEY}
+      model-name: qwen-plus
+      log-requests: true
+      log-responses: true
 
 # 监控配置
 management:
@@ -76,3 +73,10 @@ logging:
   level:
     org.example.smart.ai: DEBUG
     dev.langchain4j: DEBUG
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

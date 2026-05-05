@@ -1,9 +1,12 @@
 package org.example.smart.ai.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +25,13 @@ public class SwaggerConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .name("Authorization")
+                .description("请输入 Bearer Token，格式：Bearer <token>");
+
         return new OpenAPI()
                 .info(new Info()
                         .title("智能客服AI服务API")
@@ -43,6 +53,9 @@ public class SwaggerConfig {
                         new Server()
                                 .url("http://prod.example.com")
                                 .description("生产环境（通过网关访问）")
-                ));
+                ))
+                .addSecurityItem(new SecurityRequirement().addList("Authorization"))
+                .components(new Components()
+                        .addSecuritySchemes("Authorization", securityScheme));
     }
 }

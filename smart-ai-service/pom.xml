@@ -12,21 +12,18 @@
 
     <artifactId>smart-ai-service</artifactId>
 
-    <properties>
-        <langchain4j.version>1.0.1-beta6</langchain4j.version>
-    </properties>
-
     <dependencies>
-        <!-- Spring Boot Starter -->
+        <!-- Spring Boot WebFlux（响应式） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
-        <!-- Spring Boot WebSocket -->
+        <!-- Common Module -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
+            <groupId>org.example</groupId>
+            <artifactId>smart-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Spring Cloud OpenFeign -->
@@ -53,50 +50,67 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
-        <!-- LangChain4j OpenAI Spring Boot Starter (包含传递依赖) -->
+<!--         LangChain4j Community DashScope Spring Boot Starter -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>1.0.1-beta6</version>
         </dependency>
-
-        <!-- Milvus Client for vector database -->
+        <!-- Redis Reactive -->
         <dependency>
-            <groupId>io.milvus</groupId>
-            <artifactId>milvus-sdk-java</artifactId>
-            <version>2.3.3</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
         </dependency>
 
-        <!-- Spring Data Redis for session management -->
+        <!-- Spring Data R2DBC -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-r2dbc</artifactId>
+        </dependency>
+
+        <!-- MySQL R2DBC Driver -->
+        <dependency>
+            <groupId>io.asyncer</groupId>
+            <artifactId>r2dbc-mysql</artifactId>
+            <version>1.1.3</version>
+        </dependency>
+
+        <!-- SpringDoc OpenAPI for Swagger（WebFlux） -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-reactor</artifactId>
+            <version>1.0.1-beta6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>1.0.1-beta6</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- Spring Session for Redis -->
+        <!-- Elasticsearch -->
         <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session-data-redis</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
 
-        <!-- OpenAI API Client (for direct API calls) -->
+        <!-- LangChain4j Elasticsearch -->
         <dependency>
-            <groupId>com.theokanning.openai-gpt3-java</groupId>
-            <artifactId>service</artifactId>
-            <version>0.18.0</version>
-        </dependency>
-
-        <!-- JSON Processing -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-
-        <!-- SpringDoc OpenAPI for Swagger -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-elasticsearch</artifactId>
+            <version>1.0.1-beta6</version>
         </dependency>
     </dependencies>
 
@@ -107,6 +121,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>org.example.smart.ai.AiServiceApplication</mainClass>
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
         </plugins>
