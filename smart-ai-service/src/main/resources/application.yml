@@ -29,6 +29,7 @@ spring:
     uris: https://10.105.6.89:9201/
     username: elastic
     password: Cr=1TwP4deZNBHrfKPwY
+    index-name: knowledge_base
     connection-timeout: 10s
     socket-timeout: 30s
 
@@ -46,6 +47,11 @@ server:
 
 # LangChain4j配置
 langchain4j:
+  elasticsearch:
+    server-url: https://10.105.6.89:9201
+    index-name: rag_documents
+    username: elastic
+    password: Cr=1TwP4deZNBHrfKPwY
   open-ai:
     chat-model:
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -57,6 +63,10 @@ langchain4j:
       model-name: qwen-plus
       log-requests: true
       log-responses: true
+    embedding-model: # 向量嵌入模型（用于RAG）
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${API_KEY}
+      model-name: text-embedding-v2
 
 # 监控配置
 management:

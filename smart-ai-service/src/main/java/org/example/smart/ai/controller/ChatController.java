@@ -1,27 +1,19 @@
 package org.example.smart.ai.controller;
 
-import dev.langchain4j.service.MemoryId;
-import dev.langchain4j.service.SystemMessage;
-import dev.langchain4j.service.UserMessage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.smart.ai.dto.ChatRequest;
-import org.example.smart.ai.dto.ChatResponse;
 import org.example.smart.ai.entity.Message;
 import org.example.smart.ai.service.ConsultantService;
 import org.example.smart.ai.service.ConversationService;
 import org.example.smart.ai.vo.ConversationVO;
-import org.example.smart.common.response.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
+import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @RestController
@@ -43,19 +35,10 @@ public class ChatController {
     })
     public Flux<String> chat(
             @RequestParam("memoryId") String memoryId,
-            @RequestParam("message") String message){
-        Flux<String> result = consultantService.chat(memoryId,message);
-        return result;
-//                .doOnNext(token -> {
-//                    // 每输出一个字/一段，就打一行日志
-//                    log.info("流式输出内容：{}", token);
-//                })
-//                .doOnComplete(() -> {
-//                    log.info("流式对话完成");
-//                })
-//                .doOnError(e -> {
-//                    log.error("流式输出异常", e);
-//                });
+            @RequestParam("message") String message) {
+        return Mono.fromCallable(() -> consultantService.chat(memoryId, message))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(flux -> flux);
     }
 
     @GetMapping("/conversations")
